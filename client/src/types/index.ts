@@ -98,6 +98,10 @@ export interface Recipe {
   updatedAt: string
 }
 
+export interface RecipeSummary extends Recipe {
+  makeable: boolean
+}
+
 export interface CostBreakdownLine {
   ingredientId: string
   ingredientName: string

@@ -43,6 +43,10 @@ export type FeasibilityResult = {
   warnings: FeasibilityWarning[]
 }
 
+export type RecipeSummary = Recipe & {
+  makeable: boolean
+}
+
 export type RecipeDetail = Recipe & {
   totalCost: number
   costPerYield: number
@@ -134,8 +138,10 @@ async function buildFeasibility(
   recipe: Recipe,
   ingredientMap: Map<string, Ingredient>,
   batchCount = 1,
+  expiryWarningDays?: number,
 ): Promise<FeasibilityResult> {
-  const settings = await getSettings()
+  const warningDays =
+    expiryWarningDays ?? (await getSettings()).expiryWarningDays
   const issues: FeasibilityIssue[] = []
   const warnings: FeasibilityWarning[] = []
 
@@ -170,7 +176,7 @@ async function buildFeasibility(
     const expiryStatus = getExpiryStatus(
       ingredient.expiryDate,
       ingredient.currentQuantity,
-      settings.expiryWarningDays,
+      warningDays,
     )
     if (expiryStatus === 'expired') {
       issues.push({
@@ -233,9 +239,27 @@ export async function getRecipeFeasibility(
   return buildFeasibility(recipe, ingredientMap, batchCount)
 }
 
-export async function listRecipes(): Promise<Recipe[]> {
-  const recipes = await getAllRecipes()
-  return recipes.sort((a, b) => a.name.localeCompare(b.name))
+export async function listRecipes(): Promise<RecipeSummary[]> {
+  const [recipes, ingredients, settings] = await Promise.all([
+    getAllRecipes(),
+    getAllIngredients(),
+    getSettings(),
+  ])
+  const ingredientMap = new Map(ingredients.map((item) => [item.id, item]))
+
+  const summaries = await Promise.all(
+    recipes.map(async (recipe) => {
+      const { makeable } = await buildFeasibility(
+        recipe,
+        ingredientMap,
+        1,
+        settings.expiryWarningDays,
+      )
+      return { ...recipe, makeable }
+    }),
+  )
+
+  return summaries.sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export async function getRecipeById(id: string): Promise<RecipeDetail | null> {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createIngredient,
   createMovement,
@@ -28,12 +28,13 @@ import type {
   Recipe,
   RecipeDetail,
   RecipeInput,
+  RecipeSummary,
   Settings,
 } from '../types'
 
 export function HomePage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
-  const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [recipes, setRecipes] = useState<RecipeSummary[]>([])
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeDetail | null>(null)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,16 +51,27 @@ export function HomePage() {
   const [batchCount, setBatchCount] = useState(1)
   const [makeCakeModalOpen, setMakeCakeModalOpen] = useState(false)
 
+  const recipeRequestIdRef = useRef(0)
+
   const loadRecipeDetail = useCallback(async (id: string) => {
+    const requestId = ++recipeRequestIdRef.current
+    setSelectedRecipeId(id)
     setRecipeLoading(true)
     try {
       const detail = await fetchRecipe(id)
+      if (requestId !== recipeRequestIdRef.current) {
+        return
+      }
       setSelectedRecipe(detail)
-      setSelectedRecipeId(id)
     } catch (loadError) {
+      if (requestId !== recipeRequestIdRef.current) {
+        return
+      }
       setError(loadError instanceof Error ? loadError.message : 'Failed to load recipe')
     } finally {
-      setRecipeLoading(false)
+      if (requestId === recipeRequestIdRef.current) {
+        setRecipeLoading(false)
+      }
     }
   }, [])
 
@@ -102,12 +114,24 @@ export function HomePage() {
   }, [loadData])
 
   async function refreshAfterStockChange() {
-    const ingredientData = await fetchIngredients()
+    const [ingredientData, recipeData] = await Promise.all([
+      fetchIngredients(),
+      fetchRecipes(),
+    ])
     setIngredients(ingredientData)
+    setRecipes(recipeData)
     if (selectedRecipeId) {
       await loadRecipeDetail(selectedRecipeId)
     }
   }
+
+  const clearRecipeSelection = useCallback(() => {
+    recipeRequestIdRef.current += 1
+    setSelectedRecipe(null)
+    setSelectedRecipeId(null)
+    setRecipeLoading(false)
+    setBatchCount(1)
+  }, [])
 
   function openCreateModal() {
     setEditingIngredient(null)
@@ -179,6 +203,7 @@ export function HomePage() {
 
   async function handleSelectRecipe(id: string) {
     setBatchCount(1)
+    setSelectedRecipeId(id)
     await loadRecipeDetail(id)
   }
 
@@ -215,12 +240,14 @@ export function HomePage() {
           <div className="grid min-h-[70vh] gap-6 lg:grid-cols-2">
             <RecipePanel
               recipes={recipes}
+              selectedRecipeId={selectedRecipeId}
               selectedRecipe={selectedRecipe}
               loading={recipeLoading}
               currencySymbol={settings?.currencySymbol ?? '₫'}
               batchCount={batchCount}
               onBatchCountChange={setBatchCount}
               onSelectRecipe={handleSelectRecipe}
+              onClearSelection={clearRecipeSelection}
               onEditRecipe={openEditRecipeModal}
               onMakeCake={() => setMakeCakeModalOpen(true)}
             />

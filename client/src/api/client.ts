@@ -7,9 +7,9 @@ import type {
   MakeRecipeResult,
   Movement,
   MovementInput,
-  Recipe,
   RecipeDetail,
   RecipeInput,
+  RecipeSummary,
   Settings,
 } from '../types'
 
@@ -117,8 +117,8 @@ export function createMovement(data: MovementInput): Promise<Movement> {
   })
 }
 
-export function fetchRecipes(): Promise<Recipe[]> {
-  return request<Recipe[]>('/api/recipes')
+export function fetchRecipes(): Promise<RecipeSummary[]> {
+  return request<RecipeSummary[]>('/api/recipes')
 }
 
 export function fetchRecipe(id: string): Promise<RecipeDetail> {

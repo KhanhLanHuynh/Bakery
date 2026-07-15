@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Recipe, RecipeDetail } from '../types'
+import type { RecipeDetail, RecipeSummary } from '../types'
 import {
   formatCurrency,
   formatDifficulty,
@@ -7,42 +7,70 @@ import {
   formatTotalTime,
 } from '../utils/format'
 
+type MakeabilityFilter = 'all' | 'makeable' | 'not_makeable'
+
 interface RecipePanelProps {
-  recipes: Recipe[]
+  recipes: RecipeSummary[]
+  selectedRecipeId: string | null
   selectedRecipe: RecipeDetail | null
   loading: boolean
   currencySymbol: string
   batchCount: number
   onBatchCountChange: (count: number) => void
   onSelectRecipe: (id: string) => void
+  onClearSelection: () => void
   onEditRecipe: () => void
   onMakeCake: () => void
 }
 
+const FILTER_OPTIONS: { value: MakeabilityFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'makeable', label: 'Makeable' },
+  { value: 'not_makeable', label: 'Not Makeable' },
+]
+
 export function RecipePanel({
   recipes,
+  selectedRecipeId,
   selectedRecipe,
   loading,
   currencySymbol,
   batchCount,
   onBatchCountChange,
   onSelectRecipe,
+  onClearSelection,
   onEditRecipe,
   onMakeCake,
 }: RecipePanelProps) {
   const [search, setSearch] = useState('')
+  const [makeabilityFilter, setMakeabilityFilter] = useState<MakeabilityFilter>('all')
   const [selectorOpen, setSelectorOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [costOpen, setCostOpen] = useState(false)
   const selectorRef = useRef<HTMLDivElement>(null)
 
+  const selectedSummary = useMemo(
+    () => recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null,
+    [recipes, selectedRecipeId],
+  )
+
+  const selectedDisplayName =
+    (selectedRecipe?.id === selectedRecipeId ? selectedRecipe?.name : undefined) ??
+    selectedSummary?.name ??
+    ''
+
   const filteredRecipes = useMemo(() => {
     const query = search.trim().toLowerCase()
-    if (!query) {
-      return recipes
-    }
-    return recipes.filter((recipe) => recipe.name.toLowerCase().includes(query))
-  }, [recipes, search])
+    return recipes.filter((recipe) => {
+      const matchesSearch = !query || recipe.name.toLowerCase().includes(query)
+      const isMakeable =
+        selectedRecipe?.id === recipe.id ? selectedRecipe.makeable : Boolean(recipe.makeable)
+      const matchesMakeability =
+        makeabilityFilter === 'all' ||
+        (makeabilityFilter === 'makeable' ? isMakeable : !isMakeable)
+      return matchesSearch && matchesMakeability
+    })
+  }, [recipes, search, makeabilityFilter, selectedRecipe])
 
   useEffect(() => {
     function closeSelector(event: MouseEvent) {
@@ -56,17 +84,42 @@ export function RecipePanel({
     return () => document.removeEventListener('mousedown', closeSelector)
   }, [])
 
+  useEffect(() => {
+    if (!selectedRecipeId) {
+      return
+    }
+
+    const summary = recipes.find((recipe) => recipe.id === selectedRecipeId)
+    const isMakeable =
+      selectedRecipe?.id === selectedRecipeId
+        ? selectedRecipe.makeable
+        : Boolean(summary?.makeable)
+    const matchesFilter =
+      !summary ||
+      makeabilityFilter === 'all' ||
+      (makeabilityFilter === 'makeable' ? isMakeable : !isMakeable)
+
+    if (!matchesFilter) {
+      onClearSelection()
+    }
+  }, [makeabilityFilter, onClearSelection, recipes, selectedRecipe, selectedRecipeId])
+
   function openSelector() {
     setSelectorOpen(true)
     setSearch('')
-    const selectedIndex = recipes.findIndex((recipe) => recipe.id === selectedRecipe?.id)
+    const selectedIndex = filteredRecipes.findIndex((recipe) => recipe.id === selectedRecipeId)
     setActiveIndex(Math.max(selectedIndex, 0))
   }
 
-  function selectRecipe(recipe: Recipe) {
+  function selectRecipe(recipe: RecipeSummary) {
     onSelectRecipe(recipe.id)
     setSelectorOpen(false)
     setSearch('')
+  }
+
+  function handleFilterChange(nextFilter: MakeabilityFilter) {
+    setMakeabilityFilter(nextFilter)
+    setActiveIndex(0)
   }
 
   function handleSelectorKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -78,7 +131,7 @@ export function RecipePanel({
 
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setActiveIndex((index) => Math.min(index + 1, filteredRecipes.length - 1))
+      setActiveIndex((index) => Math.min(index + 1, Math.max(filteredRecipes.length - 1, 0)))
     } else if (event.key === 'ArrowUp') {
       event.preventDefault()
       setActiveIndex((index) => Math.max(index - 1, 0))
@@ -90,6 +143,13 @@ export function RecipePanel({
       setSearch('')
     }
   }
+
+  const filterEmptyMessage =
+    makeabilityFilter === 'makeable'
+      ? 'No makeable recipes match this filter.'
+      : makeabilityFilter === 'not_makeable'
+        ? 'No not-makeable recipes match this filter.'
+        : 'No recipes found'
 
   return (
     <section className="flex h-full flex-col rounded-2xl bg-bakery-card p-6 shadow-lg">
@@ -114,6 +174,31 @@ export function RecipePanel({
         </div>
       ) : (
         <>
+          <div
+            className="mb-3 flex flex-wrap gap-2"
+            role="group"
+            aria-label="Filter recipes by makeability"
+          >
+            {FILTER_OPTIONS.map((option) => {
+              const selected = makeabilityFilter === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => handleFilterChange(option.value)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    selected
+                      ? 'bg-bakery-brown text-white'
+                      : 'border border-bakery-border bg-white text-bakery-muted hover:bg-bakery-card/60'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+
           <div ref={selectorRef} className="relative mb-4">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-bakery-muted">
               🔍
@@ -125,8 +210,12 @@ export function RecipePanel({
               aria-expanded={selectorOpen}
               aria-controls="recipe-options"
               aria-autocomplete="list"
-              value={selectorOpen ? search : (selectedRecipe?.name ?? '')}
-              placeholder="Search recipes..."
+              value={selectorOpen ? search : selectedDisplayName}
+              placeholder={
+                selectedRecipeId
+                  ? 'Search recipes...'
+                  : 'Search and select a matching recipe...'
+              }
               onFocus={openSelector}
               onClick={openSelector}
               onChange={(event) => {
@@ -154,35 +243,59 @@ export function RecipePanel({
                 className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-bakery-border bg-white p-1 shadow-lg"
               >
                 {filteredRecipes.length === 0 ? (
-                  <li className="px-3 py-3 text-sm text-bakery-muted">No recipes found</li>
+                  <li className="px-3 py-3 text-sm text-bakery-muted">{filterEmptyMessage}</li>
                 ) : (
-                  filteredRecipes.map((recipe, index) => (
+                  filteredRecipes.map((recipe, index) => {
+                    const isMakeable =
+                      selectedRecipe?.id === recipe.id
+                        ? selectedRecipe.makeable
+                        : Boolean(recipe.makeable)
+                    return (
                     <li
                       key={recipe.id}
                       role="option"
-                      aria-selected={recipe.id === selectedRecipe?.id}
+                      aria-selected={recipe.id === selectedRecipeId}
                       onMouseEnter={() => setActiveIndex(index)}
                       onMouseDown={(event) => {
                         event.preventDefault()
                         selectRecipe(recipe)
                       }}
-                      className={`cursor-pointer rounded-lg px-3 py-2 text-sm ${
+                      className={`flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${
                         index === activeIndex
                           ? 'bg-bakery-card text-bakery-brown-dark'
                           : 'text-bakery-muted hover:bg-bakery-card/60'
                       }`}
                     >
-                      {recipe.name}
+                      <span>{recipe.name}</span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          isMakeable
+                            ? 'bg-bakery-brown/15 text-bakery-brown-dark'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {isMakeable ? 'Makeable' : 'Not makeable'}
+                      </span>
                     </li>
-                  ))
+                    )
+                  })
                 )}
               </ul>
             )}
           </div>
 
-          {loading || !selectedRecipe ? (
+          {loading || (selectedRecipeId && selectedRecipe?.id !== selectedRecipeId) ? (
             <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-bakery-border bg-white/50 py-12 text-sm text-bakery-muted">
               Loading recipe...
+            </div>
+          ) : !selectedRecipe ? (
+            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-bakery-border bg-white/50 px-6 py-12 text-center">
+              <p className="font-serif text-xl text-bakery-brown">No recipe selected</p>
+              <p className="mt-2 max-w-sm text-sm text-bakery-muted">
+                {filteredRecipes.length === 0
+                  ? filterEmptyMessage
+                  : 'Choose a recipe from the list above to view details.'}
+              </p>
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-auto">
