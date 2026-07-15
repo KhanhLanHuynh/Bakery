@@ -1,0 +1,9 @@
+{
+  "currency": "VND",
+  "currencySymbol": "₫",
+  "lowStockHighlight": true,
+  "expiryWarningDays": 7,
+  "ingredientCategories": ["produce", "dairy", "flour", "pantry", "egg", "flavoring", "other"],
+  "recipeCategories": ["cake", "frosting", "filling", "other"],
+  "units": ["g", "kg", "ml", "L", "piece", "tbsp", "tsp"]
+}

@@ -1,0 +1,88 @@
+[
+  {
+    "id": "rec_sample01",
+    "name": "Classic Sourdough",
+    "description": "A crusty, tangy sourdough loaf with a deep golden crust and open crumb structure.",
+    "category": "cake",
+    "yield": { "amount": 1, "unit": "loaf", "description": "1 round loaf" },
+    "pieces": 20,
+    "prepTimeMinutes": 1380,
+    "bakeTimeMinutes": 45,
+    "imageUrl": "",
+    "difficulty": "advanced",
+    "ingredients": [
+      { "ingredientId": "ing_sample03", "quantity": 0.2, "unit": "kg", "note": "Rye flour" },
+      { "ingredientId": "ing_sample04", "quantity": 0.8, "unit": "kg", "note": "Bread flour" },
+      { "ingredientId": "ing_sample05", "quantity": 10, "unit": "g", "note": "Yeast" },
+      { "ingredientId": "ing_sample02", "quantity": 0.05, "unit": "kg", "note": "Butter" }
+    ],
+    "steps": [
+      "Levain builds: Mix starter and flour, rest 5-6 hours.",
+      "Autolyse: Mix flour and water, rest 1 hour.",
+      "Bulk fermentation: Fold dough every 30 minutes for 4 hours.",
+      "Preshape and final shape, then bench rest 20 minutes.",
+      "Cold retard in fridge 12-15 hours.",
+      "Score and bake at 230°C for 45 minutes."
+    ],
+    "tags": ["sourdough", "bread"],
+    "createdAt": "2026-07-15T10:00:00.000Z",
+    "updatedAt": "2026-07-15T10:00:00.000Z"
+  },
+  {
+    "id": "rec_sample02",
+    "name": "Vanilla Sponge Cake",
+    "description": "Light vanilla sponge for an 8-inch round pan.",
+    "category": "cake",
+    "yield": { "amount": 1, "unit": "cake", "description": "8-inch round" },
+    "pieces": 12,
+    "prepTimeMinutes": 20,
+    "bakeTimeMinutes": 35,
+    "imageUrl": "",
+    "difficulty": "intermediate",
+    "ingredients": [
+      { "ingredientId": "ing_sample04", "quantity": 200, "unit": "g", "note": "" },
+      { "ingredientId": "ing_sample02", "quantity": 0.15, "unit": "kg", "note": "" },
+      { "ingredientId": "ing_sample06", "quantity": 4, "unit": "piece", "note": "" },
+      { "ingredientId": "ing_sample07", "quantity": 0.2, "unit": "kg", "note": "" }
+    ],
+    "steps": [
+      "Preheat oven to 175°C.",
+      "Cream butter and sugar until light and fluffy.",
+      "Beat in eggs one at a time, then add vanilla.",
+      "Fold in dry ingredients alternately with milk.",
+      "Bake until a skewer comes out clean, about 35 minutes."
+    ],
+    "tags": ["vanilla", "sponge"],
+    "createdAt": "2026-07-15T10:00:00.000Z",
+    "updatedAt": "2026-07-15T10:00:00.000Z"
+  },
+  {
+    "id": "rec_sample03",
+    "name": "Chocolate Layer Cake",
+    "description": "Rich chocolate sponge with dark chocolate chips.",
+    "category": "cake",
+    "yield": { "amount": 1, "unit": "cake", "description": "9-inch round" },
+    "pieces": 16,
+    "prepTimeMinutes": 30,
+    "bakeTimeMinutes": 40,
+    "imageUrl": "",
+    "difficulty": "intermediate",
+    "ingredients": [
+      { "ingredientId": "ing_sample04", "quantity": 250, "unit": "g", "note": "" },
+      { "ingredientId": "ing_sample02", "quantity": 0.2, "unit": "kg", "note": "" },
+      { "ingredientId": "ing_sample07", "quantity": 0.25, "unit": "kg", "note": "" },
+      { "ingredientId": "ing_sample06", "quantity": 5, "unit": "piece", "note": "" },
+      { "ingredientId": "ing_sample08", "quantity": 0.15, "unit": "kg", "note": "" }
+    ],
+    "steps": [
+      "Preheat oven to 180°C and grease two 9-inch pans.",
+      "Whisk dry ingredients together in a large bowl.",
+      "Cream butter and sugar, then add eggs one at a time.",
+      "Fold in dry mix and milk until smooth, then stir in chocolate chips.",
+      "Divide batter between pans and bake 35-40 minutes until set."
+    ],
+    "tags": ["chocolate", "layer"],
+    "createdAt": "2026-07-15T10:00:00.000Z",
+    "updatedAt": "2026-07-15T10:00:00.000Z"
+  }
+]
